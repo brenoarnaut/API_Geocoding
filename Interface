@@ -1,0 +1,194 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jul  5 22:37:14 2021
+
+@author: Breno de F. Arnaut Pereira
+"""
+
+'''The purpose of this project is build a interface in python that query Geolocation API of Google with an address. 
+The query can be simple or in batch.'''
+
+
+linkedin = 'https://www.linkedin.com/in/breno-arnaut'
+gitLink = 'https://github.com/brenoarnaut/API_Project'
+
+
+#Função para Exportação do Template
+#Ao invocarmos esta função, ela deve exportar um template para o usuário final.
+def exporta_template():
+    from pandas import DataFrame
+
+    data = {
+        'Rua': ['Praça da Luz, 2','Av. Paulista, 1578','Praça Charles Miler, s/n','Av. Mercúrio, s/n'], 
+        'Bairro': ['Luz','Bela Vista','Pacaembu','Parque Dom Pedro II'], 
+        'Cidade': ['São Paulo','São Paulo','São Paulo','São Paulo']
+        }
+    template = DataFrame(data)
+    
+    nome_arquivo = 'Template para Upload.xlsx'
+    template.to_excel(nome_arquivo,index=False)
+    
+
+#Função para execução de uma consulta simples e exportação na tela do resultado
+#Ao invocarmos essa função, ela deve receber o endereço informado manualmente pelo usuário e realizar uma consulta a API
+def consulta_simples(endereco):
+    endereco = str(endereco)
+    
+    import googlemaps
+    #Key = Credencial pessoal, deve ser criada no Google.
+    gmaps = googlemaps.Client(key='xxxxxxxxxxxxxxxxxxxxxxx')
+    geocode_result = gmaps.geocode(endereco)
+    longitude_simples = 'Longitude: ' + str(geocode_result[0]['geometry']['location']['lng'])
+    latitude_simples = 'Latitude: ' + str(geocode_result[0]['geometry']['location']['lat'])
+    print('Endereço: ',endereco)
+    print(latitude_simples)
+    print(longitude_simples)
+    print('Consulta realizada com sucesso!\n')
+
+
+
+
+#Função para execução de uma consulta em lote e exportação em excel
+#Ao invocarmos essa função, ela deve receber um excel do usuario, conforme template disponibilizado e realizar
+#uma consulta a API.
+
+def consulta_lote(dataframe_upload):
+        
+    import googlemaps
+    #Key = Credencial pessoal, deve ser criada no Google.
+    gmaps = googlemaps.Client(key='xxxxxxxxxxxxxxxxxxxxxxx')
+    
+    #Importando o Pandas
+    import pandas as pd
+    
+    base_upload = pd.read_excel(dataframe_upload)
+    
+    
+    #Criando a coluna que será utilizada na busca. 
+    base_upload['Endereco Completo'] = base_upload['Rua'] + ', ' + base_upload['Bairro'] + ', ' + base_upload['Cidade']
+
+    #Criando uma lista dos resultados da API
+    df = list()
+    for item in base_upload['Endereco Completo']:
+        busca = gmaps.geocode(item)
+        df.append(busca)
+    
+    
+    #Cria o df_final que receberá somente os dados de Latitude e Longitude
+    df_final = pd.DataFrame()
+
+    #Este loop acontecerá de acordo com o tamanho do df, que é o total de retorno do Google
+    #Para cada execução, entra em na Lista >> Dicionario >> Geometry >> Location e copia a Latitude e Longitude para a Df_final
+    for item in range(0,len(df)):
+        for x in df[item][0]['geometry']['location'].items():
+            base_temporaria = df[item][0]['geometry']['location'].copy()
+            df_final = df_final.append(base_temporaria,ignore_index=True)
+            break
+    #Aqui foi necessario um break pois ele executa a açao 2 vezes, por existirem 2 itens dentro de Location
+    
+    #Cria a base final, juntando a base inicial com as lat long encontradas
+    base_final = pd.concat([base_upload,df_final], axis=1, join='inner')
+
+    #Exportando o arquivo final.
+    from datetime import datetime
+    now1 = datetime.now()
+    hora1 = str(now1.day) + '.' + str(now1.month) +'.'+ str(now1.year) + '.xlsx'
+    nome_arquivo1 = 'Lista Exportada - '+ hora1
+    base_final.to_excel(nome_arquivo1,index=False)
+
+
+
+
+#Interface PysimpleGUI
+import PySimpleGUI as sg
+
+#Tema alterável
+#sg.theme("Reddit") #Azul Claro
+sg.theme('DefaultNoMoreNagging') #Azul escuro
+
+#O Design do PySimpleGUI funciona semelhante a um excel. Você pode passar apenas as linhas e os elementes ficaram
+#dispostos um abaixo do outro. Porém, é possivel utilizar colunas, neste caso, em algumas partes foram criadas duas colunas.
+#Os elementos da esquerda foram nomeados de Box, enquanto os da direita foram nomeados de btn.
+#Primeiro criei 3 pares de elementos, depois eles são chamados no layout como colunas.
+
+box1_layout = [
+            [sg.Text("Rua:",size=(7,1)), sg.Input('Praça do Monumento, s/nº',key="key_rua",size=(45,1))],
+            [sg.Text("Bairro:",size=(7,1)), sg.Input('Ipiranga',key="key_bairro",size=(45,1))],
+            [sg.Text("Cidade:",size=(7,1)), sg.Input('São Paulo',key="key_cidade",size=(45,1))]
+            ]
+
+btn1_layout = [[sg.Button("Consultar",size=(14, 4))]]
+
+box2_layout = [[sg.Text("Para realizar uma consulta em Lote, realize o Upload de um arquivo de acordo com o Template disponibilizado para Download.",
+                        size=(48,2),justification='left')]]
+
+btn2_layout = [[sg.Button("Template",key='download_template',size=(14, 2))]]
+
+box3_layout = [[sg.Text('LinkedIn',enable_events=True, key='link_linkedin', text_color='blue')]]
+
+btn3_layout = [[sg.Text('                                                                      '),
+                sg.Text('                         '),
+                sg.Text('GitHub',justification='right', enable_events=True, key='link_git',text_color='blue')]]
+
+         
+#Agora criamos o laytou da página, como todos os elementos estarão dispostos.
+#Dentro dos elementos existem as chaves (keys) que retornam ações/cliques naqueles botoes.      
+layout = [
+            [sg.Text("Latitude e longitude são importantes porque facilitam a descoberta do posicionamento e\nendereçamento de qualquer lugar existente na superfície terrestre.",
+                    justification='center')],
+            [sg.Text("")],
+            [sg.Text("Para realizar uma consulta simples, insira os dados conforme exemplo.")],
+            [sg.Column(box1_layout),sg.Column(btn1_layout)],
+            [sg.Text("")],
+            [sg.Column(box2_layout),sg.Column(btn2_layout)],
+            [sg.Text("")],
+            [sg.Text("Selecione o arquivo informando seu caminho ou utilizando o Browse.")],
+            [sg.Text("Caminho:",size=(7,1)), sg.Input('',key="path",size=(46,1)),sg.FileBrowse(key="path",size=(6, 1)),sg.Button("Enviar",size=(6, 1))],
+            [sg.Text("")],
+            [sg.Text("Resultados")],
+            [sg.Output(size=(73,10))],
+            [sg.Column(box3_layout),sg.Column(btn3_layout)]
+            
+            ]
+#Construindo a Janela, com o título e o layout criado anteriormente
+window = sg.Window('Busca de Coordenadas Geográficas - Google GeoLocation', layout)
+
+
+#Este loop é o responsável pela aplicação ficar aberta, enquanto o usuário não fechar o programa.
+while True:
+    event, values = window.read()
+    if event == sg.WIN_CLOSED or event=="Exit":
+        break
+    
+    
+    #Se o botão consultar for selecionado, a função consulta simples é invocada com o endereço informado.
+    if event == "Consultar":
+        endereco_passado = values["key_rua"] + '. ' + values["key_bairro"] + ', ' + values["key_cidade"]
+        endereco_passado = str(endereco_passado)
+        consulta_simples(endereco_passado)
+        print('Realize outra Consulta Simples ou em Lote!\n')
+        
+    #Se o botão Download Template for selecionado, a função exporta template é invocada e exporta o template.
+    if event == "download_template":
+        exporta_template()
+        print('O Template foi exportado com sucesso!\n')
+   
+    #Se o botão Enviar for selecionado, a função consulta em lote é invocada com o arquivo xlsx informado.
+    if event == "Enviar":
+        caminho_informado = values["path"]
+        print('Upload realizado.')
+        consulta_lote(caminho_informado)
+        print('Consulta realizada com sucesso!\n')
+        print('Realize outra Consulta Simples ou em Lote!\n')
+    
+    #Se o botão linkdin for selecionado, irá direcionar para o link informado.
+    if event == "link_linkedin":
+        from webbrowser import open
+        print('Você foi direcionado para o LinkedIn!\n')
+        open(linkedin)    
+            
+    #Se o botão github for selecionado, irá direcionar para o link informado.
+    if event == "link_git":
+        from webbrowser import open
+        print('Você foi direcionado para o Respositório do Github!\n')
+        open(gitLink)
