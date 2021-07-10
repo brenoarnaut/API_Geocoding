@@ -7,6 +7,6 @@ The query can be simple or in batch.'''
 This project was built using the library pysimplegui and googlemaps/geocode.
 
 Links:
-  https://pypi.org/project/PySimpleGUI/
-  https://pysimplegui.readthedocs.io/en/latest/
+  https://pypi.org/project/PySimpleGUI/ \n
+  https://pysimplegui.readthedocs.io/en/latest/ \n
   https://www.linkedin.com/in/breno-arnaut
