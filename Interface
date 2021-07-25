@@ -36,7 +36,7 @@ def consulta_simples(endereco):
     
     import googlemaps
     #Key = Credencial pessoal, deve ser criada no Google.
-    gmaps = googlemaps.Client(key='AIzaSyDnHISSVFGLGmxjKL8B7aKG7z1tU2sgvPQ')
+    gmaps = googlemaps.Client(key='INSERT YOUR KEY HERE')
     geocode_result = gmaps.geocode(endereco)
     if len(geocode_result) == 0:
         print('Endereço inválido!')
@@ -59,7 +59,7 @@ def consulta_lote(dataframe_upload):
         
     import googlemaps
     #Key = Credencial pessoal, deve ser criada no Google.
-    gmaps = googlemaps.Client(key='AIzaSyDnHISSVFGLGmxjKL8B7aKG7z1tU2sgvPQ')
+    gmaps = googlemaps.Client(key='INSERT YOUR KEY HERE')
     
     #Importando o Pandas
     import pandas as pd
