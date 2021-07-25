@@ -2,7 +2,7 @@
 """
 Created on Mon Jul  5 22:37:14 2021
 
-@author: Breno de F. Arnaut Pereira
+@author: Breno Arnaut
 """
 
 '''The purpose of this project is build a interface in python that query Geolocation API of Google with an address. 
@@ -10,7 +10,7 @@ The query can be simple or in batch.'''
 
 
 linkedin = 'https://www.linkedin.com/in/breno-arnaut'
-gitLink = 'https://github.com/brenoarnaut/API_Project'
+gitLink = 'https://github.com/brenoarnaut/API_Geocoding'
 
 
 #Função para Exportação do Template
@@ -36,15 +36,18 @@ def consulta_simples(endereco):
     
     import googlemaps
     #Key = Credencial pessoal, deve ser criada no Google.
-    gmaps = googlemaps.Client(key='xxxxxxxxxxxxxxxxxxxxxxx')
+    gmaps = googlemaps.Client(key='AIzaSyDnHISSVFGLGmxjKL8B7aKG7z1tU2sgvPQ')
     geocode_result = gmaps.geocode(endereco)
-    longitude_simples = 'Longitude: ' + str(geocode_result[0]['geometry']['location']['lng'])
-    latitude_simples = 'Latitude: ' + str(geocode_result[0]['geometry']['location']['lat'])
-    print('Endereço: ',endereco)
-    print(latitude_simples)
-    print(longitude_simples)
-    print('Consulta realizada com sucesso!\n')
-
+    if len(geocode_result) == 0:
+        print('Endereço inválido!')
+    else:
+        longitude_simples = 'Longitude: ' + str(geocode_result[0]['geometry']['location']['lng'])
+        latitude_simples = 'Latitude: ' + str(geocode_result[0]['geometry']['location']['lat'])
+        print('Endereço: ',endereco)
+        print(latitude_simples)
+        print(longitude_simples)
+        print('Consulta realizada com sucesso!\n')
+    
 
 
 
@@ -56,7 +59,7 @@ def consulta_lote(dataframe_upload):
         
     import googlemaps
     #Key = Credencial pessoal, deve ser criada no Google.
-    gmaps = googlemaps.Client(key='xxxxxxxxxxxxxxxxxxxxxxx')
+    gmaps = googlemaps.Client(key='AIzaSyDnHISSVFGLGmxjKL8B7aKG7z1tU2sgvPQ')
     
     #Importando o Pandas
     import pandas as pd
@@ -79,11 +82,17 @@ def consulta_lote(dataframe_upload):
 
     #Este loop acontecerá de acordo com o tamanho do df, que é o total de retorno do Google
     #Para cada execução, entra em na Lista >> Dicionario >> Geometry >> Location e copia a Latitude e Longitude para a Df_final
+    #Se a API não encontrar nada, retorna um valor em branco na lista, por isso realizo o primeiro IF
+    #Se a lista tiver tamanho 0, completo com NA, se nao completa abaixo com o Valor correto.
     for item in range(0,len(df)):
-        for x in df[item][0]['geometry']['location'].items():
-            base_temporaria = df[item][0]['geometry']['location'].copy()
+        if len (df[item])==0:
+            base_temporaria = {'lat': 'NA', 'lng': 'NA'}
             df_final = df_final.append(base_temporaria,ignore_index=True)
-            break
+        else:
+            for x in df[item][0]['geometry']['location'].items():
+                    base_temporaria = df[item][0]['geometry']['location'].copy()
+                    df_final = df_final.append(base_temporaria,ignore_index=True)
+                    break
     #Aqui foi necessario um break pois ele executa a açao 2 vezes, por existirem 2 itens dentro de Location
     
     #Cria a base final, juntando a base inicial com as lat long encontradas
@@ -151,7 +160,7 @@ layout = [
             
             ]
 #Construindo a Janela, com o título e o layout criado anteriormente
-window = sg.Window('Busca de Coordenadas Geográficas - Google GeoLocation', layout)
+window = sg.Window('Busca de Coordenadas Geográficas - Google Geocoding', layout)
 
 
 #Este loop é o responsável pela aplicação ficar aberta, enquanto o usuário não fechar o programa.
